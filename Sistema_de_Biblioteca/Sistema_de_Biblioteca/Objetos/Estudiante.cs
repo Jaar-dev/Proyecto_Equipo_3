@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using static System.Console;
-using Newtonsoft.Json;
 
 namespace Sistema_de_Biblioteca.Objetos
 {
@@ -19,6 +21,8 @@ namespace Sistema_de_Biblioteca.Objetos
                     throw new ArgumentException("La carrera no puede estar vacía.");
                 if (value.Length < 3)
                     throw new ArgumentException("La carrera debe tener al menos 3 caracteres.");
+                if (!Regex.IsMatch(value, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+                    throw new ArgumentException("La carrera solo puede contener letras y espacios.");
                 carrera = value.Trim();
             }
         }
@@ -52,6 +56,32 @@ namespace Sistema_de_Biblioteca.Objetos
 
             ValidarEdadParaCarrera();
         }
+
+        public List<string> ObtenerErroresValidacion()
+        {
+            var errores = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(Nombre))
+                errores.Add("El nombre está vacío.");
+
+            if (string.IsNullOrWhiteSpace(Identidad))
+                errores.Add("La identidad está vacía.");
+
+            if (string.IsNullOrWhiteSpace(CorreoElectrónico) || !CorreoElectrónico.Contains("@"))
+                errores.Add("El correo electrónico es inválido.");
+
+            if (FechaNacimiento > DateTime.Now)
+                errores.Add("La fecha de nacimiento no puede ser en el futuro.");
+
+            if (string.IsNullOrWhiteSpace(Carrera))
+                errores.Add("La carrera está vacía.");
+
+            if (MaxLibrosPermitidos <= 0)
+                errores.Add("El máximo de libros permitidos debe ser mayor que cero.");
+
+            return errores;
+        }
+
 
         public override void MostrarInformación()
         {
@@ -119,7 +149,7 @@ namespace Sistema_de_Biblioteca.Objetos
 
             LibrosPrestados.Add(libro);
             WriteLine($"  Libro '{libro.Titulo}' agregado a los préstamos de {Nombre}.");
-            WriteLine($"     Libros prestados: {LibrosPrestados.Count}/{MaxLibrosPermitidos}");
+            WriteLine($"   Libros prestados: {LibrosPrestados.Count}/{MaxLibrosPermitidos}");
             return true;
         }
 
@@ -139,7 +169,7 @@ namespace Sistema_de_Biblioteca.Objetos
 
             LibrosPrestados.Remove(libro);
             WriteLine($"  Libro '{libro.Titulo}' removido de los préstamos de {Nombre}.");
-            WriteLine($"     Libros prestados: {LibrosPrestados.Count}/{MaxLibrosPermitidos}");
+            WriteLine($"    Libros prestados: {LibrosPrestados.Count}/{MaxLibrosPermitidos}");
             return true;
         }
 

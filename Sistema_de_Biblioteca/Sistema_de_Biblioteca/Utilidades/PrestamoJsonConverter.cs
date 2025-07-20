@@ -19,8 +19,8 @@ namespace Sistema_de_Biblioteca
             writer.WritePropertyName("IdEstudiante");
             writer.WriteValue(value.IdEstudiante);
 
-            writer.WritePropertyName("ISBNLibro");
-            writer.WriteValue(value.ISBMLibro);
+            writer.WritePropertyName("ISBNLibros");
+            serializer.Serialize(writer, value.ISBNLibros);
 
             writer.WritePropertyName("FechaPréstamo");
             writer.WriteValue(value.FechaPréstamo);
@@ -37,6 +37,24 @@ namespace Sistema_de_Biblioteca
             writer.WritePropertyName("Multa");
             writer.WriteValue(value.Multa);
 
+            writer.WritePropertyName("Renovaciones");
+            writer.WriteValue(value.Renovaciones);
+
+            writer.WritePropertyName("NotasAdicionales");
+            writer.WriteValue(value.NotasAdicionales);
+
+            writer.WritePropertyName("FechaUltimaRenovacion");
+            writer.WriteValue(value.FechaUltimaRenovacion);
+
+            writer.WritePropertyName("ISBNLibrosDevueltos");
+            serializer.Serialize(writer, value.ISBNLibrosDevueltos);
+
+            if (value.ISBNLibros != null && value.ISBNLibros.Any())
+            {
+                writer.WritePropertyName("ISBMLibro");
+                writer.WriteValue(value.ISBNLibros.First());
+            }
+
             writer.WriteEndObject();
         }
 
@@ -46,10 +64,8 @@ namespace Sistema_de_Biblioteca
             {
                 JObject jo = JObject.Load(reader);
 
-                // Crear un préstamo vacío usando el constructor sin parámetros
                 var préstamo = new Préstamo();
 
-                // Usar reflexión para establecer las propiedades
                 var type = typeof(Préstamo);
 
                 if (jo["IdPréstamo"] != null)
@@ -63,13 +79,26 @@ namespace Sistema_de_Biblioteca
                     préstamo.IdEstudiante = jo["IdEstudiante"].ToString();
                 }
 
-                if (jo["ISBNLibro"] != null)
+                // Manejar ISBNLibros - puede ser una lista o un string (compatibilidad)
+                if (jo["ISBNLibros"] != null)
                 {
-                    préstamo.ISBMLibro = jo["ISBNLibro"].ToString();
+                    if (jo["ISBNLibros"].Type == JTokenType.Array)
+                    {
+                        préstamo.ISBNLibros = jo["ISBNLibros"].ToObject<List<string>>();
+                    }
+                    else if (jo["ISBNLibros"].Type == JTokenType.String)
+                    {
+                        // Compatibilidad: si es un string, convertirlo a lista
+                        préstamo.ISBNLibros = new List<string> { jo["ISBNLibros"].ToString() };
+                    }
                 }
-                else if (jo["ISBMLibro"] != null) // Por si acaso hay un typo en el JSON
+                else if (jo["ISBMLibro"] != null || jo["ISBNLibro"] != null)
                 {
-                    préstamo.ISBMLibro = jo["ISBMLibro"].ToString();
+                    string isbn = jo["ISBMLibro"]?.ToString() ?? jo["ISBNLibro"]?.ToString();
+                    if (!string.IsNullOrEmpty(isbn))
+                    {
+                        préstamo.ISBNLibros = new List<string> { isbn };
+                    }
                 }
 
                 if (jo["FechaPréstamo"] != null)
@@ -101,7 +130,34 @@ namespace Sistema_de_Biblioteca
                     propMulta.SetValue(préstamo, jo["Multa"].ToObject<decimal>());
                 }
 
-                // Los objetos Alumno y LibroPrestado se vincularán después mediante VincularDatos()
+                if (jo["Renovaciones"] != null)
+                {
+                    var propRenovaciones = type.GetProperty("Renovaciones");
+                    propRenovaciones.SetValue(préstamo, jo["Renovaciones"].ToObject<int>());
+                }
+
+                if (jo["NotasAdicionales"] != null)
+                {
+                    préstamo.NotasAdicionales = jo["NotasAdicionales"].ToString();
+                }
+
+                if (jo["FechaUltimaRenovacion"] != null && jo["FechaUltimaRenovacion"].Type != JTokenType.Null)
+                {
+                    var propFechaRenovacion = type.GetProperty("FechaUltimaRenovacion");
+                    propFechaRenovacion.SetValue(préstamo, jo["FechaUltimaRenovacion"].ToObject<DateTime?>());
+                }
+
+                if (jo["ISBNLibrosDevueltos"] != null)
+                {
+                    if (jo["ISBNLibrosDevueltos"].Type == JTokenType.Array)
+                    {
+                        préstamo.ISBNLibrosDevueltos = jo["ISBNLibrosDevueltos"].ToObject<List<string>>();
+                    }
+                    else if (jo["ISBNLibrosDevueltos"].Type == JTokenType.String)
+                    {
+                        préstamo.ISBNLibrosDevueltos = new List<string> { jo["ISBNLibrosDevueltos"].ToString() };
+                    }
+                }
 
                 return préstamo;
             }
