@@ -5,9 +5,15 @@ using static System.Console;
 
 namespace Sistema_de_Biblioteca.Objetos
 {
+
     public class Empleado : Gestor_Biblioteca
     {
+        private static int contadorEmpleados = 0;
+
+        public int NumeroEmpleado { get; private set; }
+
         private string puesto;
+        public Empleado() : base() { }
         public string Puesto
         {
             get => puesto;
@@ -39,8 +45,8 @@ namespace Sistema_de_Biblioteca.Objetos
             {
                 if (value > DateTime.Now)
                     throw new ArgumentException("La fecha de contratación no puede ser en el futuro.");
-                if (value < FechaNacimiento.AddYears(14))
-                    throw new ArgumentException("La fecha de contratación no puede ser antes de los 14 años de edad.");
+                if (value < FechaNacimiento.AddYears(18))
+                    throw new ArgumentException("La fecha de contratación no puede ser antes de los 18 años de edad.");
                 fechaContratación = value;
             }
         }
@@ -66,17 +72,24 @@ namespace Sistema_de_Biblioteca.Objetos
 
         public TipoEmpleado Tipo { get; set; }
 
+        public static int TotalEmpleadosContratados => contadorEmpleados;
+
         public Empleado(string nombre, string identidad, string correoElectrónico,
                        string teléfono, DateTime fechaNacimiento, string dirección,
                        string puesto, string turno, DateTime fechaContratación,
                        decimal salario, TipoEmpleado tipo = TipoEmpleado.Bibliotecario)
             : base(nombre, identidad, correoElectrónico, teléfono, fechaNacimiento, dirección)
         {
+            contadorEmpleados++;
+            NumeroEmpleado = contadorEmpleados;
+
             Puesto = puesto;
             Turno = turno;
             FechaContratación = fechaContratación;
             Salario = salario;
             Tipo = tipo;
+
+            WriteLine($"\n✓ Empleado contratado exitosamente con número: {NumeroEmpleado}");
         }
 
         public override void MostrarInformación()
@@ -84,6 +97,7 @@ namespace Sistema_de_Biblioteca.Objetos
             WriteLine($"\n{new string('=', 40)}");
             WriteLine($"    INFORMACIÓN DEL EMPLEADO");
             WriteLine($"{new string('=', 40)}");
+            WriteLine($"Número de Empleado: {NumeroEmpleado}");
             WriteLine($"Nombre: {Nombre}");
             WriteLine($"Identidad: {Identidad}");
             WriteLine($"Edad: {Edad} años (Nacimiento: {FechaNacimiento:dd/MM/yyyy})");
@@ -142,7 +156,7 @@ namespace Sistema_de_Biblioteca.Objetos
 
             string turnoAnterior = Turno;
             Turno = nuevoTurno;
-            RegistrarActividad($"Turno cambiado de '{turnoAnterior}' a '{nuevoTurno}'");
+            RegistrarActividad($"Empleado #{NumeroEmpleado} - Turno cambiado de '{turnoAnterior}' a '{nuevoTurno}'");
             return true;
         }
 
@@ -162,7 +176,7 @@ namespace Sistema_de_Biblioteca.Objetos
 
             decimal salarioAnterior = Salario;
             Salario = nuevoSalario;
-            RegistrarActividad($"Salario actualizado de {salarioAnterior:C} a {nuevoSalario:C} por {empleadoAutorizador.Nombre}");
+            RegistrarActividad($"Empleado #{NumeroEmpleado} - Salario actualizado de {salarioAnterior:C} a {nuevoSalario:C} por {empleadoAutorizador.Nombre} (#{empleadoAutorizador.NumeroEmpleado})");
             return true;
         }
 
@@ -208,7 +222,7 @@ namespace Sistema_de_Biblioteca.Objetos
 
             if (!EstaEnHorarioLaboral())
             {
-                WriteLine($"Advertencia: {Nombre} está gestionando multas fuera de su horario laboral ({Turno}).");
+                WriteLine($"Advertencia: Empleado #{NumeroEmpleado} - {Nombre} está gestionando multas fuera de su horario laboral ({Turno}).");
             }
 
             return base.GestionarMulta(préstamo, pagada);
@@ -216,12 +230,42 @@ namespace Sistema_de_Biblioteca.Objetos
 
         public void MostrarResumenDesempeño(List<Préstamo> prestamos, List<Libro> libros)
         {
-            WriteLine($"\n  RESUMEN DE DESEMPEÑO - {Nombre}");
+            WriteLine($"\n  RESUMEN DE DESEMPEÑO - Empleado #{NumeroEmpleado}");
+            WriteLine($"Nombre: {Nombre}");
             WriteLine($"Período: {FechaContratación:dd/MM/yyyy} - {DateTime.Now:dd/MM/yyyy}");
             WriteLine($"Antigüedad: {CalcularAntiguedad().Days} días");
-
             WriteLine($"Estado: {(EstaEnHorarioLaboral() ? "En horario" : "Fuera de horario")}");
             WriteLine($"Permisos: {Tipo}");
+        }
+
+        public static void MostrarListaEmpleados(List<Empleado> empleados)
+        {
+            WriteLine($"\n{new string('=', 50)}");
+            WriteLine($"    LISTA DE EMPLEADOS - Total: {TotalEmpleadosContratados}");
+            WriteLine($"{new string('=', 50)}");
+
+            if (empleados.Any())
+            {
+                foreach (var emp in empleados.OrderBy(e => e.NumeroEmpleado))
+                {
+                    WriteLine($"#{emp.NumeroEmpleado} - {emp.Nombre} - {emp.Puesto} - {emp.Tipo}");
+                }
+            }
+            else
+            {
+                WriteLine("No hay empleados registrados.");
+            }
+            WriteLine($"{new string('=', 50)}");
+        }
+
+        public static Empleado BuscarPorNumero(List<Empleado> empleados, int numeroEmpleado)
+        {
+            return empleados.FirstOrDefault(e => e.NumeroEmpleado == numeroEmpleado);
+        }
+
+        public override string ObtenerResumen()
+        {
+            return $"Empleado #{NumeroEmpleado} - {Nombre} - {Puesto} ({Tipo})";
         }
     }
 }

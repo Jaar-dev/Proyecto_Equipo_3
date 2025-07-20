@@ -1,21 +1,32 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using static System.Console;
-
 namespace Sistema_de_Biblioteca.Objetos
 {
     public class Préstamo
     {
         public int IdPréstamo { get; private set; }
+        public string IdEstudiante { get; set; }
+        public string ISBMLibro { get; set; }
+        [JsonIgnore]
         public Estudiante Alumno { get; private set; }
         public Libro LibroPrestado { get; private set; }
+        [JsonIgnore]
         public DateTime FechaPréstamo { get; private set; }
+        [JsonIgnore]
         public DateTime FechaLimite { get; private set; }
+        [JsonIgnore]
         public DateTime? FechaDevoluciónReal { get; set; }
+        [JsonIgnore]
         public string Estado { get; private set; }
+        [JsonIgnore]
         public decimal Multa { get; private set; }
 
         private static int nextIdPréstamo = 1;
         public static int TotalPrestamos { get; private set; } = 0;
+        public Préstamo() { }
 
         public Préstamo(Estudiante alumno, Libro libro)
         {
@@ -31,6 +42,8 @@ namespace Sistema_de_Biblioteca.Objetos
             IdPréstamo = nextIdPréstamo++;
             Alumno = alumno;
             LibroPrestado = libro;
+            IdEstudiante = alumno.Identidad;
+            ISBMLibro = libro.ISBN;
             FechaPréstamo = DateTime.Now;
             FechaLimite = FechaPréstamo.AddDays(7);
             Estado = "Activo";
@@ -99,6 +112,11 @@ namespace Sistema_de_Biblioteca.Objetos
             {
                 WriteLine($"Libro '{LibroPrestado.Titulo}' devuelto a tiempo.");
             }
+        }
+        public void VincularDatos(List<Estudiante> estudiantes, List<Libro> libros)
+        {
+            Alumno = estudiantes.FirstOrDefault(e => e.Identidad == IdEstudiante);
+            LibroPrestado = libros.FirstOrDefault(l => l.ISBN == ISBMLibro);
         }
 
         public void MostrarDetalle()

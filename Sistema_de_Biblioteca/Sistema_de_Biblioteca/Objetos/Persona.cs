@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using static System.Console;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.IO;
 
 namespace Sistema_de_Biblioteca.Objetos
 {
+
     public abstract class Persona
     {
+        public Persona() { }
         private string nombre;
         public string Nombre
         {
@@ -37,7 +44,7 @@ namespace Sistema_de_Biblioteca.Objetos
                 identidad = value.Trim();
             }
         }
-        
+
         private string correoElectrónico;
         public string CorreoElectrónico
         {
@@ -220,5 +227,7 @@ namespace Sistema_de_Biblioteca.Objetos
         {
             return ObtenerResumen();
         }
+
     }
 }
+    

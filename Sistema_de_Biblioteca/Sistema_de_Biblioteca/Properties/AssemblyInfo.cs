@@ -1,16 +1,15 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // La información general de un ensamblado se controla mediante el siguiente 
 // conjunto de atributos. Cambie estos valores de atributo para modificar la información
 // asociada a un ensamblado.
 [assembly: AssemblyTitle("Sistema_de_Biblioteca")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Sistema de Gestion de Biblioteca")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Sistema_de_Biblioteca")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
+[assembly: AssemblyCopyright("Copyright © Equipo 3 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,3 +30,10 @@ using System.Runtime.InteropServices;
 //
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+
+//Metadata adicional del ensamblado
+[assembly: AssemblyMetadata("Equipo", "Biblioteca 3")]
+[assembly: AssemblyMetadata("Integrantes", "ALFREDO ISAI MARTINEZ BUSTILLO, JOSE ANDRES ALVAREZ RODRIGUEZ, ANGIE ELIZABETH MENDOZA MENDOZA, DAYANA MICHEL CILIEZAR RAMIREZ")]
+[assembly: AssemblyMetadata("Profesor", "Kevin Fúnez")]
+[assembly: AssemblyMetadata("Curso", "Programación I")]
+[assembly: AssemblyMetadata("Periodo", "2025-II")]

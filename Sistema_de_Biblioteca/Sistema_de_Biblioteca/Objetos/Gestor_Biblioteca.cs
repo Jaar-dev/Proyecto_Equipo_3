@@ -7,6 +7,7 @@ namespace Sistema_de_Biblioteca.Objetos
 {
     public abstract class Gestor_Biblioteca : Persona
     {
+        protected Gestor_Biblioteca() : base() { }
         public Gestor_Biblioteca(string nombre, string identidad, string correoElectrónico,
                                 string teléfono, DateTime fechaNacimiento, string dirección)
             : base(nombre, identidad, correoElectrónico, teléfono, fechaNacimiento, dirección)
@@ -108,7 +109,8 @@ namespace Sistema_de_Biblioteca.Objetos
             if (prestamos.Any())
             {
                 var topLibros = prestamos.GroupBy(p => p.LibroPrestado.ISBN)
-                                        .Select(g => new {
+                                        .Select(g => new
+                                        {
                                             ISBN = g.Key,
                                             Titulo = g.First().LibroPrestado.Titulo,
                                             Cantidad = g.Count()

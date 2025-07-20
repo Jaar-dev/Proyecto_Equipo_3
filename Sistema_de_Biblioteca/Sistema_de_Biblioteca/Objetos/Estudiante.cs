@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using static System.Console;
+using Newtonsoft.Json;
 
 namespace Sistema_de_Biblioteca.Objetos
 {
     public class Estudiante : Persona
     {
+        public Estudiante() : base() { }
         private string carrera;
         public string Carrera
         {
@@ -32,7 +34,10 @@ namespace Sistema_de_Biblioteca.Objetos
                 if (Edad < 18) return 3;
 
                 // Estudiantes universitarios pueden tener más libros
-                if (Carrera.ToLower().Contains("postgrado") || Carrera.ToLower().Contains("maestría") || Carrera.ToLower().Contains("doctorado"))
+                if (!string.IsNullOrEmpty(Carrera) &&
+                    (Carrera.ToLower().Contains("postgrado") ||
+                     Carrera.ToLower().Contains("maestría") ||
+                     Carrera.ToLower().Contains("doctorado")))
                     return 5;
 
                 return 3;

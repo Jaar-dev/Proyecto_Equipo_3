@@ -1,6 +1,7 @@
 ﻿using Sistema_de_Biblioteca.Objetos;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using static System.Console;
@@ -9,11 +10,18 @@ namespace Sistema_de_Biblioteca
 {
     internal class Menu_Principal
     {
-        private static readonly List<Estudiante> estudiantes = new List<Estudiante>();
-        private static readonly List<Libro> libros = new List<Libro>();
-        private static readonly List<Préstamo> prestamos = new List<Préstamo>();
-        private static readonly List<Empleado> empleados = new List<Empleado>();
-        private static readonly Sala_Lectura salaPrincipal = new Sala_Lectura("Sala Principal", "Primer Piso", 3, 3, new TimeSpan(8, 0, 0), new TimeSpan(20, 0, 0));
+        private static List<Estudiante> estudiantes = new List<Estudiante>();
+        private static List<Libro> libros = new List<Libro>();
+        private static List<Préstamo> prestamos = new List<Préstamo>();
+        private static List<Empleado> empleados = new List<Empleado>();
+        private static Sala_Lectura salaPrincipal = new Sala_Lectura("Sala Principal", "Primer Piso", 3, 3, new TimeSpan(8, 0, 0), new TimeSpan(20, 0, 0));
+
+        private static readonly string rutaBase = @"C:\Users\jo415\OneDrive\Documentos\2 semestre\Programacion I\Proyecto_Equipo_3\Sistema_de_Biblioteca\Sistema_de_Biblioteca\bin\Debug";
+
+        private static readonly GestorPersistenciaJSON<Estudiante> gestorEstudiantes = new GestorPersistenciaJSON<Estudiante>(Path.Combine(rutaBase, "estudiantes.json"));
+        private static readonly GestorPersistenciaJSON<Libro> gestorLibros = new GestorPersistenciaJSON<Libro>(Path.Combine(rutaBase, "libros.json"));
+        private static readonly GestorPersistenciaJSON<Préstamo> gestorPrestamos = new GestorPersistenciaJSON<Préstamo>(Path.Combine(rutaBase, "prestamos.json"));
+        private static readonly GestorPersistenciaJSON<Empleado> gestorEmpleados = new GestorPersistenciaJSON<Empleado>(Path.Combine(rutaBase, "empleados.json"));
 
         private static Empleado empleadoActual;
 
@@ -22,6 +30,9 @@ namespace Sistema_de_Biblioteca
 
         static void Main(string[] args)
         {
+            CargarDatos();
+
+
             InicializarAdministradorPorDefecto();
 
             IniciarSesionComoAdmin();
@@ -41,29 +52,119 @@ namespace Sistema_de_Biblioteca
 
                 switch (opción)
                 {
-                    case "1": MenuEstudiantes(); 
+                    case "1":
+                        MenuEstudiantes();
                         break;
-                    case "2": MenuLibros(); 
+                    case "2":
+                        MenuLibros();
                         break;
-                    case "3": MenuPrestamos(); 
+                    case "3":
+                        MenuPrestamos();
                         break;
-                    case "4": MenuSalaLectura(); 
+                    case "4":
+                        MenuSalaLectura();
                         break;
-                    case "5": MenuEmpleados(); 
+                    case "5":
+                        MenuEmpleados();
                         break;
-                    case "6": GenerarReportes(); 
+                    case "6":
+                        GenerarReportes();
                         break;
-                    case "7": ActualizarDatosPersonales(); 
+                    case "7":
+                        ActualizarDatosPersonales();
                         break;
-                    case "8": CambiarUsuario(); 
+                    case "8":
+                        CambiarUsuario();
                         break;
-                    case "9": WriteLine("Saliendo del sistema..."); 
+                    case "9":
+                        GuardarDatos();
+                        WriteLine("Datos Guardados. ¡Hasta luego!");
                         break;
-                    default: WriteLine("Opción no válida."); 
+                    default:
+                        WriteLine("Opción no válida.");
                         break;
                 }
                 if (opción != "9") PausarPantalla();
             } while (opción != "9");
+        }
+
+        private static void CargarDatos()
+        {
+            WriteLine("Cargando datos del sistema...");
+            estudiantes = gestorEstudiantes.Cargar();
+            libros = gestorLibros.Cargar();
+            prestamos = gestorPrestamos.Cargar();
+            empleados = gestorEmpleados.Cargar();
+
+            VincularDatos();
+            RestaurarContadoresEstaticos();
+            WriteLine("¡Datos cargados exitosamente!");
+            PausarPantalla();
+        }
+
+        private static void GuardarDatos()
+        {
+            WriteLine("Guardando datos...");
+            gestorEstudiantes.Guardar(estudiantes);
+            gestorLibros.Guardar(libros);
+            gestorPrestamos.Guardar(prestamos);
+            gestorEmpleados.Guardar(empleados);
+        }
+
+        private static void GuardarDatosAutomaticamente()
+        {
+            try
+            {
+                gestorEstudiantes.Guardar(estudiantes);
+                gestorLibros.Guardar(libros);
+                gestorPrestamos.Guardar(prestamos);
+                gestorEmpleados.Guardar(empleados);
+                WriteLine("\n✓ Datos guardados automáticamente.");
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"\n Error al guardar automáticamente: {ex.Message}");
+            }
+        }
+
+        private static void VincularDatos()
+        {
+            foreach (var prestamo in prestamos)
+            {
+                prestamo.VincularDatos(estudiantes, libros);
+            }
+
+            foreach (var estudiante in estudiantes)
+            {
+                estudiante.LibrosPrestados.Clear();
+                var prestamosDelEstudiante = prestamos.Where(p => p.IdEstudiante == estudiante.Identidad && (p.Estado == "Activo" || p.Estado == "Confirmado"));
+                foreach (var prestamo in prestamosDelEstudiante)
+                {
+                    if (prestamo.LibroPrestado != null)
+                    {
+                        estudiante.LibrosPrestados.Add(prestamo.LibroPrestado);
+                    }
+                }
+            }
+        }
+
+        private static void RestaurarContadoresEstaticos()
+        {
+            if (prestamos.Any())
+            {
+                typeof(Préstamo).GetField("nextIdPréstamo", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                               .SetValue(null, prestamos.Max(p => p.IdPréstamo) + 1);
+            }
+            if (empleados.Any())
+            {
+                typeof(Empleado).GetField("contadorEmpleados", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                                .SetValue(null, empleados.Max(e => e.NumeroEmpleado));
+            }
+            if (libros.Any())
+            {
+                typeof(Libro).GetProperty("TotalLibrosCreados", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                             .SetValue(null, libros.Count);
+            }
         }
 
         private static void MostrarMenuPrincipal()
@@ -137,7 +238,7 @@ namespace Sistema_de_Biblioteca
             WriteLine($" Bienvenido: {empleadoActual.Nombre}");
             WriteLine($" Rol: {empleadoActual.Tipo}");
             WriteLine($" Estado: Todos los permisos habilitados");
-            WriteLine("  Presione cualquier tecla para continuar...");
+            WriteLine(" Presione cualquier tecla para continuar...");
             ReadKey();
         }
 
@@ -189,15 +290,19 @@ namespace Sistema_de_Biblioteca
 
                 switch (opción)
                 {
-                    case "1": AgregarEstudiante(); 
+                    case "1":
+                        AgregarEstudiante();
                         break;
-                    case "2": ListarEstudiantes(); 
+                    case "2":
+                        ListarEstudiantes();
                         break;
-                    case "3": BuscarEstudiante(); 
+                    case "3":
+                        BuscarEstudiante();
                         break;
-                    case "4": 
+                    case "4":
                         break;
-                    default: WriteLine("Opción inválida."); 
+                    default:
+                        WriteLine("Opción inválida.");
                         break;
                 }
                 if (opción != "4") PausarPantalla();
@@ -233,8 +338,8 @@ namespace Sistema_de_Biblioteca
 
                 var nuevoEstudiante = new Estudiante(nombre, identidad, correo, teléfono,
                                                    fechaNacimiento, dirección, carrera);
-
                 estudiantes.Add(nuevoEstudiante);
+                GuardarDatosAutomaticamente();
 
                 notificador($"Estudiante '{nombre}' agregado exitosamente. Edad: {nuevoEstudiante.Edad} años");
             }
@@ -299,15 +404,19 @@ namespace Sistema_de_Biblioteca
 
                 switch (opción)
                 {
-                    case "1": AgregarLibro(); 
+                    case "1":
+                        AgregarLibro();
                         break;
-                    case "2": ListarLibros(); 
+                    case "2":
+                        ListarLibros();
                         break;
-                    case "3": BuscarLibro(); 
+                    case "3":
+                        BuscarLibro();
                         break;
-                    case "4": 
+                    case "4":
                         break;
-                    default: WriteLine("Opción inválida."); 
+                    default:
+                        WriteLine("Opción inválida.");
                         break;
                 }
                 if (opción != "4") PausarPantalla();
@@ -337,6 +446,7 @@ namespace Sistema_de_Biblioteca
 
                 if (empleadoActual.RegistrarNuevoLibro(libros, nuevoLibro))
                 {
+                    GuardarDatosAutomaticamente();
                     notificador($"Libro '{titulo}' agregado exitosamente por {empleadoActual.Nombre}.");
                 }
             }
@@ -406,21 +516,28 @@ namespace Sistema_de_Biblioteca
 
                 switch (opción)
                 {
-                    case "1": RealizarPréstamo(); 
+                    case "1":
+                        RealizarPréstamo();
                         break;
-                    case "2": ConfirmarPréstamo(); 
+                    case "2":
+                        ConfirmarPréstamo();
                         break;
-                    case "3": CancelarPréstamo(); 
+                    case "3":
+                        CancelarPréstamo();
                         break;
-                    case "4": DevolverLibro(); 
+                    case "4":
+                        DevolverLibro();
                         break;
-                    case "5": ListarPrestamos(); 
+                    case "5":
+                        ListarPrestamos();
                         break;
-                    case "6": MostrarPrestamosPorVencer(); 
+                    case "6":
+                        MostrarPrestamosPorVencer();
                         break;
-                    case "7": 
+                    case "7":
                         break;
-                    default: WriteLine("Opción inválida."); 
+                    default:
+                        WriteLine("Opción inválida.");
                         break;
                 }
                 if (opción != "7") PausarPantalla();
@@ -467,6 +584,7 @@ namespace Sistema_de_Biblioteca
 
                 lib.PrestarCopia();
                 est.AgregarLibroPrestado(lib);
+                GuardarDatosAutomaticamente();
 
                 notificador($"Préstamo registrado correctamente (ID: {nuevoPréstamo.IdPréstamo}).");
             }
@@ -503,6 +621,7 @@ namespace Sistema_de_Biblioteca
                     throw new Exception("Préstamo no encontrado.");
 
                 préstamo.Confirmar();
+                GuardarDatosAutomaticamente();
                 notificador($"Préstamo {idPréstamo} confirmado exitosamente por {empleadoActual?.Nombre ?? "Sistema"}.");
             }
             catch (Exception ex)
@@ -548,6 +667,7 @@ namespace Sistema_de_Biblioteca
                         préstamo.Alumno.RemoverLibroPrestado(préstamo.LibroPrestado);
                         préstamo.LibroPrestado.RecibirCopia();
                     }
+                    GuardarDatosAutomaticamente();
 
                     notificador($"Préstamo {idPréstamo} cancelado exitosamente.");
                 }
@@ -600,6 +720,7 @@ namespace Sistema_de_Biblioteca
                             empleadoActual.GestionarMulta(préstamoADevolver, true);
                         }
                     }
+                    GuardarDatosAutomaticamente();
 
                     notificador($"Devolución del préstamo {idPréstamo} procesada exitosamente por {empleadoActual.Nombre}.");
                 }
@@ -689,15 +810,19 @@ namespace Sistema_de_Biblioteca
 
                 switch (opción)
                 {
-                    case "1": salaPrincipal.MostrarSala(); 
+                    case "1":
+                        salaPrincipal.MostrarSala();
                         break;
-                    case "2": OcuparAsientoSala(); 
+                    case "2":
+                        OcuparAsientoSala();
                         break;
-                    case "3": LiberarAsientoSala(); 
+                    case "3":
+                        LiberarAsientoSala();
                         break;
-                    case "4": 
+                    case "4":
                         break;
-                    default: WriteLine("Opción inválida."); 
+                    default:
+                        WriteLine("Opción inválida.");
                         break;
                 }
                 if (opción != "4") PausarPantalla();
@@ -771,15 +896,19 @@ namespace Sistema_de_Biblioteca
 
                 switch (opción)
                 {
-                    case "1": AgregarEmpleado(); 
+                    case "1":
+                        AgregarEmpleado();
                         break;
-                    case "2": ListarEmpleados(); 
+                    case "2":
+                        ListarEmpleados();
                         break;
-                    case "3": BuscarEmpleado(); 
+                    case "3":
+                        BuscarEmpleado();
                         break;
-                    case "4": 
+                    case "4":
                         break;
-                    default: WriteLine("Opción inválida."); 
+                    default:
+                        WriteLine("Opción inválida.");
                         break;
                 }
                 if (opción != "4") PausarPantalla();
@@ -829,6 +958,7 @@ namespace Sistema_de_Biblioteca
                                                fechaContratación, salario, tipo);
 
                 empleados.Add(nuevoEmpleado);
+                GuardarDatosAutomaticamente();
                 notificador($"Empleado '{nombre}' agregado exitosamente. Edad: {nuevoEmpleado.Edad} años, Tipo: {tipo}");
             }
             catch (ArgumentException ex)
@@ -1009,9 +1139,10 @@ namespace Sistema_de_Biblioteca
                         empleadoActual.ActualizarCorreo(correo);
                         empleadoActual.ActualizarTeléfono(telefono);
                         empleadoActual.ActualizarDirección(direccion);
-                        break;
+                    break;
                 }
 
+                GuardarDatosAutomaticamente();
                 notificador("Datos actualizados exitosamente.");
             }
             catch (Exception ex)
