@@ -5,7 +5,7 @@ using static System.Console;
 
 namespace Sistema_de_Biblioteca.Objetos
 {
-    public abstract class Gestor_Biblioteca : Persona
+    public abstract class Gestor_Biblioteca : Empleado
     {
         protected Gestor_Biblioteca() : base() { }
         public Gestor_Biblioteca(string nombre, string identidad, string correoElectrónico,

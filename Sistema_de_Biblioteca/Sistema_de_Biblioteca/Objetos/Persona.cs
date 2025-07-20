@@ -25,6 +25,8 @@ namespace Sistema_de_Biblioteca.Objetos
                     throw new ArgumentException("El nombre debe tener al menos 5 caracteres.");
                 if (value.Length > 40)
                     throw new ArgumentException("El nombre no puede exceder 40 caracteres.");
+                if (!Regex.IsMatch(value, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
+                    throw new ArgumentException("El nombre solo puede contener letras y espacios.");
                 nombre = value.Trim();
             }
         }
@@ -39,9 +41,10 @@ namespace Sistema_de_Biblioteca.Objetos
             {
                 if (string.IsNullOrWhiteSpace(value))
                     throw new ArgumentException("La identidad no puede estar vacía.");
-                if (value.Length < 13)
-                    throw new ArgumentException("La identidad debe tener al menos 13 caracteres.");
-                identidad = value.Trim();
+                string limpia = Regex.Replace(value ?? "", @"[^\d]", "");
+                if (limpia.Length != 13)
+                    throw new ArgumentException("La identidad debe contener exactamente 13 dígitos numéricos.");
+                identidad = limpia;
             }
         }
 
@@ -66,12 +69,10 @@ namespace Sistema_de_Biblioteca.Objetos
                 if (string.IsNullOrWhiteSpace(value))
                     throw new ArgumentException("El teléfono no puede estar vacío.");
 
-                string telefonoLimpio = Regex.Replace(value, @"[^\d]", "");
-
-                if (!Regex.IsMatch(telefonoLimpio, @"^\d{8,12}$"))
-                    throw new ArgumentException("El teléfono debe contener entre 8 y 12 dígitos.");
-
-                teléfono = telefonoLimpio;
+                string limpio = Regex.Replace(value, @"[^\d]", "");
+                if (!Regex.IsMatch(limpio, @"^[2-9]\d{7,11}$"))
+                    throw new ArgumentException("El teléfono debe tener entre 8 y 12 dígitos y no iniciar con 0 o 1.");
+                teléfono = limpio;
             }
         }
 
@@ -111,6 +112,8 @@ namespace Sistema_de_Biblioteca.Objetos
                     throw new ArgumentException("La dirección no puede estar vacía.");
                 if (value.Length < 5)
                     throw new ArgumentException("La dirección debe tener al menos 5 caracteres.");
+                if (!Regex.IsMatch(value, @"^[a-zA-Z0-9\s\#\-\.,áéíóúÁÉÍÓÚñÑ]+$"))
+            throw new ArgumentException("La dirección contiene caracteres inválidos.");
                 dirección = value.Trim();
             }
         }

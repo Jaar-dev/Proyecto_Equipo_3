@@ -78,7 +78,6 @@
     <Compile Include="Menu_Principal.cs" />
     <Compile Include="Objetos\Empleado.cs" />
     <Compile Include="Objetos\Estudiante.cs" />
-    <Compile Include="Objetos\Gestor_Biblioteca.cs" />
     <Compile Include="Objetos\Libro.cs" />
     <Compile Include="Objetos\Persona.cs" />
     <Compile Include="Objetos\Prestamo.cs" />
